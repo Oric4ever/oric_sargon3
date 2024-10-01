@@ -12,13 +12,12 @@ So here is the first public version, with the following main differences with th
 
 ## How to use
 
-Run the provided `sargon3.tap` in an Oric emulator.
+Run the provided [sargon3.tap](https://github.com/Oric4ever/oric_sargon3/blob/main/sargon3.tap) in an Oric emulator.
 
-Read [the manual](https://archive.org/details/apple2_hayden_sargon_iii_manual_1983) to learn all the functions !
+Moves are entered in algebraic notation (eg. E2-E4). Read [the manual](https://archive.org/details/apple2_hayden_sargon_iii_manual_1983) to learn all the functions ! 
 
->> You will know that Sargon III is waiting for you when you see the block cursor in the left.
+NB: You will know that Sargon III is waiting for you when you see the block cursor in the left.
 
->> Moves are entered in algebraic notation (eg. E2-E4).
 
 ## How to build
 
