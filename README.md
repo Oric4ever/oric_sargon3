@@ -12,7 +12,7 @@ So here is the first public version, with the following main differences with th
 
 ## How to use
 
-Run the provided [sargon3.tap](https://github.com/Oric4ever/oric_sargon3/blob/main/sargon3.tap) in an Oric emulator.
+Download the provided [sargon3.tap](https://github.com/Oric4ever/oric_sargon3/blob/main/sargon3.tap) image and run it in an Oric emulator.
 
 Moves are entered in algebraic notation (eg. E2-E4). Read [the manual](https://archive.org/details/apple2_hayden_sargon_iii_manual_1983) to learn all the functions ! 
 
