@@ -27,10 +27,26 @@ A simple Makefile is provided with a few quick & dirty tools...
 
 Basically the `patcher` tool will take the AppleII binary and an Openings Book file, apply patches and add Oric graphics in order to build `sargon3.tap`.
 
+## Status
+
+- [X] Fully playable
+- [X] Graphics
+- [X] Printer outputs (moves list and board representation) : approximately like on the Apple II version
+- [ ] window on search
+- [ ] access to complete openings library
+- [X] Key functions (selecting levels, easy mode, verify mode, changing sides, inverting the board, editing the board, taking back moves, move suggestion, replay, cancel opening library etc. )
+- [ ] loading/saving game
+- [ ] zap beeper
+
+Bonuses:
+
+- [X] graphics and moves list combined on single screen
+- [X] added a **level 0** : Sargon III only has 2 seconds of thought per move
+- [ ] exact timings
+
 ## Work In Progress
 
-- for now the Oric version starts with a preloaded Openings Book file, it does not start with the root of the Openings book, and it won't load any Openings Book file afterwards.
+- for now the Oric version starts with a preloaded Openings Book file (several variations of the Spanish game), it does not start with the root of the Openings book, and it won't load any Openings Book file afterwards.
 So I will try to reclaim some space in the memory map in order to have a larger Openings Library, and an option to load specific Openings (for training).
 - currently trying to replace the approximate timings with precise timings (the Apple II has no hardware timer, the Oric has a VIA)...
-- will try to add a Level 0 so that Sargon is more accessible for chess beginners (currently even level 1E might be challenging)...
 - will provide a compact version of the window view on Sargon's computation, I have planned a moves column for that on the right...
