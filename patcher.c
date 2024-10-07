@@ -26,6 +26,7 @@ void inverse(int address)             { mem[address] ^= 0x80; }
 void word (int address, int value)    { mem[address] = value & 0xff; mem[address+1] = (value >> 8) & 0xff; }
 void bytes(int address, int values[]) { for (int i=0; values[i] != STOP; i++) byte(address+i, values[i]); }
 void string(int address, char *str)   { while (*str) mem[address++] = *str++; }
+void move(int src, int dst, int nb)   { for (int i=0; i<nb; i++) mem[dst+i]=mem[src+i]; }
 
 #define WNDLFT  0x20
 #define WNDWDTH 0x21
@@ -45,12 +46,9 @@ void string(int address, char *str)   { while (*str) mem[address++] = *str++; }
 #define COUT1   0x0D40
 #define VIDOUT  0x0D4A
 #define VTAB    0x0D81
-
-#define diff    (0xFC22-VTAB)
-
-#define VTABZ   (0xFC24-diff)
-#define HOME    (0xFC58-diff)
-#define CLEOLZ  (0xFC9E - diff)
+#define VTABZ   0x0D83
+#define HOME    0x0D9D
+#define CLEOLZ  0x0DE3
 
 int init[] = {
     0xa9, 0xb8,         // lda #$b8    ; keep cursor out of screen
@@ -107,7 +105,7 @@ int monitor[] = {
     0x85, BASH,         // sta BASH
     0xa5, BASL,         // lda BASL
     0x60,               // rts
-// COUT1 normally at FDF0, here at 0D30
+// COUT1 normally at FDF0, here at 0D40
     0x84, 0x35,         // sty YSAV1
     0x48,               // pha
     0x20, VIDOUT & 0xff, VIDOUT >> 8,   // jsr VIDOUT
@@ -115,7 +113,7 @@ int monitor[] = {
     0x68,               // pla
     0xa4, 0x35,         // ldy YSAV1
     0x60,               // rts
-// VIDOUT normally at FBFD, here at 0D3A
+// VIDOUT normally at FBFD, here at 0D4A
     0xc9, 0x20,         // cmp #$20
     0xb0, 0x02,         // bcs *+4
     0x69, 0x40,         // adc #$40     00-1F: letters in inverse mode
@@ -127,48 +125,34 @@ int monitor[] = {
     0xe6, CH,           // inc CH
     0xa5, CH,           // lda CH
     0xc5, WNDWDTH,      // cmp WNDWDTH
-    0xb0, 0x5f,         // bcs CR
+    0xb0, 0x45,         // bcs CR
     0x60,               // rts
-// ctrlchars
+// ctrlchars at 0d63
     0xc9, 0x0d,         // cmp #$0d
-    0xf0, 0x5a,         // beq CR
+    0xf0, 0x40,         // beq CR
     0xc9, 0x0a,         // cmp #$0a
-    0xf0, 0x5a,         // beq LF
+    0xf0, 0x40,         // beq LF
     0xc9, 0x08,         // cmp #$08
     0xd0, 0x1B,         // bne RTS
-// BS
+// BS at 0D6F
     0xc6, CH,           // dec CH
     0x10, 0x17,         // bpl RTS4
     0xa5, 0x21,         // lda WNDWDTH
     0x85, CH,           // sta CH
     0xc6, CH,           // dec CH
-// UP
+// UP at 0D79
     0xa5, WNDTOP,       // lda WNDTOP
     0xc5, CV,           // cmp CV
     0xb0, 0x0b,         // bcs RTS4
     0xc6, CV,           // dec CV
-// VTAB normally at FC22
+// VTAB normally at FC22, here at 0D81
     0xa5, CV,           // lda CV
-// VTABZ
+// VTABZ at 0D83
     0x20, BASCALC & 0xff, BASCALC >> 8,   // jsr BASCALC
     0x65, WNDLFT,       // adc WNDLFT
     0x85, BASL,         // sta BASL
     0x60,               // rts
-// ESC1
-    0x49, 0xc0,         // eor #$c0
-    0xf0, 0x28,         // beq HOME
-    0x69, 0xfd,         // adc #$fd
-    0x90, 0xc0,         // bcc ADVANCE
-    0xf0, 0xda,         // beq BS
-    0x69, 0xfd,         // adc #$fd
-    0x90, 0x2c,         // bcc LF
-    0xf0, 0xde,         // beq UP
-    0x69, 0xfd,         // adc #$fd
-    0x90, 0x5c,         // bcc CLREOL
-    0xd0, 0xe9,         // bne RTS4
-// CLREOP                  
-    0xa4, CH,           // ldy CH
-    0xa5, CV,           // lda CV
+// CLEOP1 at 0D8B
     0x48,               // pha
     0x20, VTABZ  & 0xff, VTABZ  >> 8,   // jsr VTABZ
     0x20, CLEOLZ & 0xff, CLEOLZ >> 8,   // jsr CLEOLZ
@@ -177,21 +161,21 @@ int monitor[] = {
     0x69, 0x00,         // adc #$00
     0xc5, WNDBTM,       // cmp WNDBTM
     0x90, 0xf0,         // bcc CLEOP1
-    0xb0, 0xca,         // bcs VTAB
-// HOME
+    0xb0, 0xe4,         // bcs VTAB
+// HOME at 0D9D
     0xa5, WNDTOP,       // lda WNDTOP
     0x85, CV,           // sta CV
     0xa0, 0x00,         // ldy #0
     0x84, CH,           // sty CH
     0xf0, 0xe4,         // beq CLEOP1
-// CR
+// CR at 0DA7
     0xa9, 0x00,         // lda #0
     0x85, CH,           // sta CH
-// LF
+// LF at 0DAB
     0xe6, CV,           // inc CV
     0xa5, CV,           // lda CV
     0xc5, WNDBTM,       // cmp WNDBTM
-    0x90, 0xb6,         // bcc VTABZ
+    0x90, 0xd0,         // bcc VTABZ
     0xc6, CV,           // dec CV
 // SCROLL
     0xa5, WNDTOP,       // lda WNDTOP
@@ -219,9 +203,9 @@ int monitor[] = {
 // SCRL3
     0xa0, 0x00,         // ldy #0
     0x20, CLEOLZ & 0xff, CLEOLZ >> 8,   // jsr CLEOLZ
-    0xb0, 0x86,         // bcs VTAB
+    0xb0, 0xa0,         // bcs VTAB
     0xa4, CH,           // ldy CH
-// CLEOLZ normally at FC9E
+// CLEOLZ normally at FC9E, here at 0DE3
     0xa9, 0x20,         // lda #$20
 // CLEOL2
     0x91, BASL,         // sta (BASL),y
@@ -240,6 +224,33 @@ void time_patches() {
 //    word(0x64EF, 0x01a9);   // lda #1 to clear Z flag
 
     // TODO: increment $DA/$DB once per second, with the hardware timer
+}
+
+void patch_levels()
+{
+    // add level 0 key
+    int level0[] = {
+        0xEA,       // nop
+        0xA2, 0x00, // ldx #0
+        0xC9, 0xA9, // cmp #$A9 ; ')'
+        0xF0, 0x0C, // beq L9BBA 
+        STOP
+    };
+    bytes(0x9BA7, level0);
+
+    // move level tables to add level 0
+    move(0x6148, 0x8E3D, 8); byte(0x8E3C, 120); // 120 secs for level 0
+    move(0x6158, 0x8E34, 8); byte(0x8E33, 0);   // msb
+    move(0x6256, 0x8E2B, 8); byte(0x8E2A, 60);  // 60 moves
+    // 6255 -> 8E2A
+    word(0xA361, 0x8E2A);
+    word(0xA371, 0x8E2A);
+    // 6157 -> 8E33
+    word(0xA358, 0x8E33);
+    word(0xA36C, 0x8E33);
+    // 6147 -> 8E3C
+    word(0xA34E, 0x8E3C);
+    word(0xA367, 0x8E3C);
 }
 
 void all_patches() {
@@ -264,10 +275,8 @@ void all_patches() {
     int patch[] = { 0x4E, 0xDF, 0x02, STOP };
     for (int i=0; i<NB(addr); i++) bytes(addr[i], patch);
 
-    // remove rom version check
-    word(0x9BAC, 0xEAEA);
-
     time_patches();
+    patch_levels();
 
     // fix small bug that transfers an extra space
     byte(0x9AC6, 39);
@@ -279,16 +288,16 @@ void all_patches() {
     word(0x9AA8, 0xBF90);
     word(0x9ACA, 0xBF90);
 
-    // replace direct writes to screen address 05A5
+    // replace direct writes to screen address 05A5 (level)
     word(0x8843, 0xBBCD); 
     word(0x933D, 0xBBCD); 
     word(0x93C5, 0xBBCD); 
     word(0x9DB0, 0xBBCD); 
-    // replace direct writes to screen address 05A6
+    // replace direct writes to screen address 05A6 (Easy mode)
     word(0x885B, 0xBBCE); 
     word(0x9ECB, 0xBBCE); 
     word(0x9ED3, 0xBBCE); 
-    // replace direct writes to screen address 05A7
+    // replace direct writes to screen address 05A7 (Verify mode)
     word(0x884F, 0xBBCF); 
     word(0x9EF0, 0xBBCF); 
     // replace direct access to screen address 0527 (blinking '*')
@@ -525,18 +534,27 @@ void all_patches() {
         inverse(0x8554 + i);
     } 
 
-    // write Sargon title with graphics chars
-    string(0x8591, "             `abcdefghijk  yyy     LEVEL");
-    string(0x8504, "             lmnopqrstuvw  zzz       1  ");
-    word(0x88bc, 0xbb80);
-    word(0x88c2, 0xbba8);
+    // Sargon title with graphics chars
+    string(0x8590, "             `abcdefghijk  yyy     LEVEL");
+    string(0x85B8, "             lmnopqrstuvw  zzz          ");
 
     // remove initial message
     bytes(0x9123, nops);
 
     byte(0x880e, 0x02); // change window top
-    // skip move list preparation
-    byte(0x8819, 0x4c); word(0x881a, 0x8831);
+
+    // direct write the 2 first lines and skip move list preparation
+    int initscreen[] = {
+        0xa0, 79,           // ldy #79
+        0xb9, 0x90, 0x85,   // lda 8590,y
+        0x99, 0x80, 0xbb,   // sta BB80,y
+        0x88,               // dey
+        0x10, 0xf7,         // bpl *-9
+        0x4c, 0x31, 0x88,   // jmp 8831
+        STOP
+    };
+    bytes(0x8819, initscreen);
+
     byte(0x9D22, 0x4c); word(0x9D23, 0x9D32);
 
     // replace CTRL-H by DELETE
